@@ -1,0 +1,11 @@
+patient_code,birth_date,sex,diagnosis_date,visit_date,edss_score,edss_pyramidal,treatment_class,DUMMY_DATA
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2015-01-01,1.0,2,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2016-06-01,1.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2017-07-01,1.0,2,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2018-11-01,1.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2020-03-01,0.5,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2021-07-01,0.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2022-07-01,0.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2023-04-01,0.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2024-07-01,0.0,0,none,1
+DUMMY-non_progressing,1984-08-01,F,2014-11-01,2025-12-01,0.0,1,none,1

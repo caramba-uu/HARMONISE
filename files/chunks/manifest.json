@@ -1,0 +1,123 @@
+{
+ "model_outputs/hybrid_results.json": {
+  "sha256": "3987227fd9a298cb9df63dd8a09eae598627cd3d255a24bec61f4c6bb1af6f03",
+  "parts": [
+   "model_outputs/hybrid_results.json.gz.part00",
+   "model_outputs/hybrid_results.json.gz.part01"
+  ]
+ },
+ "model_outputs/country_specific_results.json": {
+  "sha256": "f6461dfbe43cf8c43e752a5e02f71a1d8e6253d4639b1f1566c6c69ef87fad13",
+  "parts": [
+   "model_outputs/country_specific_results.json.gz.part00"
+  ]
+ },
+ "models/hybrid_AU.joblib": {
+  "sha256": "81fff43b7176ca697741b7ee2b61dada868e2c8ea4315fa9fa1390b0e3e859fd",
+  "parts": [
+   "models/hybrid_AU.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_BE.joblib": {
+  "sha256": "e6b011bc2df3e9b1f51cb3890058117b56266cab0f3baecdf0a47876282de094",
+  "parts": [
+   "models/hybrid_BE.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_CA.joblib": {
+  "sha256": "0d58246eca131ea5b38ab74032ed3e7adb2d1cbc8f2f6a77598c458726c2b83d",
+  "parts": [
+   "models/hybrid_CA.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_CH.joblib": {
+  "sha256": "b1aeaef0de44cd079c5cfa7a41d82715c7c72c6682d42e0cd443907159014709",
+  "parts": [
+   "models/hybrid_CH.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_CZ.joblib": {
+  "sha256": "6dfcfa77a8ea1823a76a70828c8fc6f17d98953ce1c797f3ab44d3b885f18e8c",
+  "parts": [
+   "models/hybrid_CZ.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_EG.joblib": {
+  "sha256": "ab9315bef991c093d9493734cf007d7f9d56a300ecbcb1b506e8f309b76875f6",
+  "parts": [
+   "models/hybrid_EG.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_ES.joblib": {
+  "sha256": "25dd0e5f564e4cd9f6ac95e007443ea8adb4235794f24fb66e5d4feaec9dfeb7",
+  "parts": [
+   "models/hybrid_ES.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_GB.joblib": {
+  "sha256": "0d98afcda1746150136cf131d0344cd08c0ad8cc312943c8dc708bd7d877bd54",
+  "parts": [
+   "models/hybrid_GB.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_IR.joblib": {
+  "sha256": "9e2f7930fe1a7a59d1bf7a201a21a178e5d82e4bf4dd9aac2f775b406eb20b28",
+  "parts": [
+   "models/hybrid_IR.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_IT.joblib": {
+  "sha256": "7026a1b447a9b55efba1abe96703c97e3248022b668a26c30a0be69c7cfb49f9",
+  "parts": [
+   "models/hybrid_IT.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_KW.joblib": {
+  "sha256": "a94429d27382540e1d8dc0ddd1d2f0a33dc6e5943de99e439be7002caa8d0012",
+  "parts": [
+   "models/hybrid_KW.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_LB.joblib": {
+  "sha256": "ebfb45a6c170ceffadec8e66d6d31288fccebbde3c1da382b08b67595b9e7b54",
+  "parts": [
+   "models/hybrid_LB.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_NL.joblib": {
+  "sha256": "6fd9546cfcc7f4de130be76ee56b4e853613c91a73dfca4034365504eac340c9",
+  "parts": [
+   "models/hybrid_NL.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_PT.joblib": {
+  "sha256": "5fb817e1b70bde0fbc7746e60f2f0e832ec15087574446289a5d0da8d8cde814",
+  "parts": [
+   "models/hybrid_PT.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_TN.joblib": {
+  "sha256": "b08ae7668b8f7cbaab7376fee0ab20d9f6949b3aca99b67c806735dc68aa324f",
+  "parts": [
+   "models/hybrid_TN.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_TR.joblib": {
+  "sha256": "61b923cbe6768e2fd8480681a7ff7ca16312f1d33f08aba1cf577d7d78224413",
+  "parts": [
+   "models/hybrid_TR.joblib.gz.part00"
+  ]
+ },
+ "models/hybrid_US.joblib": {
+  "sha256": "6f9f8c7aa4ec3e76af3224c4a066992a16e5d3d06853744949a3d9c319c2a249",
+  "parts": [
+   "models/hybrid_US.joblib.gz.part00"
+  ]
+ },
+ "models/global.joblib": {
+  "sha256": "220d0cb7a3ff0e58c23f0895bb45aa352a31e63d4f85cd5f5549a6b14889ae3b",
+  "parts": [
+   "models/global.joblib.gz.part00"
+  ]
+ }
+}

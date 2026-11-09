@@ -1,0 +1,11 @@
+patient_code,birth_date,sex,diagnosis_date,visit_date,edss_score,edss_pyramidal,treatment_class,DUMMY_DATA
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2008-05-01,3.0,2,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2009-03-01,3.0,2,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2010-07-01,3.5,3,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2011-08-01,3.5,3,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2012-05-01,3.5,3,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2013-02-01,4.0,1,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2013-10-01,4.5,1,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2014-08-01,4.5,3,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2015-04-01,5.0,4,first_line,1
+DUMMY-slowly_progressing,1971-07-01,F,2007-06-01,2016-02-01,5.5,2,first_line,1
