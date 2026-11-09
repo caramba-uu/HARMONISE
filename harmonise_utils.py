@@ -151,30 +151,32 @@ def best_significance(p):
 # ---------------------------------------------------------------- Lorscheider criteria
 
 def lorscheider_progression_index(visits, relapse_dates):
-    # EDSS increase of >= 1.0 (baseline <= 5.5) or >= 0.5 (baseline > 5.5) to at least 4, no relapse
-    # within 30 days, confirmed at the first visit >= 90 days later. A recorded pyramidal FS < 2 rules out
-    # that baseline; if FS is missing it is ignored.
+    # Lorscheider et al. 2016: confirmed disability progression independent of relapse activity. EDSS
+    # increase of 1.0 (EDSS <= 5.5) or 0.5 (EDSS >= 6.0) over the preceding visit, to at least 4.0, with
+    # pyramidal FS >= 2, confirmed at the first visit >= 90 days later. EDSS scores within 30 days after a
+    # relapse onset are not used. FS is checked at the progression and confirmation visits when recorded;
+    # when missing, the other criteria are applied without it. Returns the index of the progression visit.
     edss = visits["edss_score"].tolist()
     dates = visits["visit_date"].tolist()
     pyramidal = visits["edss_pyramidal"].tolist()
     if len(edss) < 3:
         return None
+
+    def after_relapse(k):
+        return any(0 <= (dates[k] - r).days <= 30 for r in relapse_dates)
+
+    def pyramidal_ok(k):
+        return pd.isna(pyramidal[k]) or pyramidal[k] >= 2
+
     for i, baseline in enumerate(edss):
-        if pd.notna(pyramidal[i]) and pyramidal[i] < 2:
-            continue
         if i + 2 >= len(edss):
             break
-        progression, progression_date = edss[i + 1], dates[i + 1]
-        if progression <= baseline:
-            continue
         step = 1.0 if baseline <= 5.5 else 0.5
-        if progression < 4 or progression - baseline < step:
-            continue
-        if any(abs((progression_date - r).days) <= 30 for r in relapse_dates):
+        if edss[i + 1] < 4 or edss[i + 1] - baseline < step or after_relapse(i + 1) or not pyramidal_ok(i + 1):
             continue
         for j in range(i + 2, len(edss)):
-            if (dates[j] - progression_date).days >= 90:
-                if edss[j] - baseline >= step:
+            if (dates[j] - dates[i + 1]).days >= 90 and not after_relapse(j):
+                if edss[j] - baseline >= step and pyramidal_ok(j):
                     return i + 1
                 break
     return None

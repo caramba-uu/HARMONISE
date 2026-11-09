@@ -40,6 +40,7 @@ STATES = {
     "none": {"symbol": "line-ns-open", "name": "No prediction"},
 }
 FONT = 15
+FONT_FAMILY = "Source Sans Pro, ui-sans-serif, system-ui, sans-serif"  # same as the app
 HEIGHT = 460
 
 
@@ -253,7 +254,8 @@ def results_table(res, confidence):
 def _layout(fig, theme, height=HEIGHT):
     t = THEMES[theme]
     fig.update_layout(height=height, autosize=True, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                      font={"color": t["muted"], "size": FONT}, margin={"l": 130, "r": 30, "t": 60, "b": 60},
+                      font={"color": t["muted"], "size": FONT, "family": FONT_FAMILY},
+                      margin={"l": 130, "r": 30, "t": 60, "b": 60},
                       hovermode="closest", hoverlabel={"font_size": FONT},
                       legend={"orientation": "h", "yanchor": "bottom", "y": 1.04, "x": 0, "xanchor": "left",
                               "font": {"color": t["ink"]}})
@@ -523,5 +525,4 @@ EVENT_ID=$(curl -s -X POST $URL/gradio_api/call/predict -H "Content-Type: applic
   | python3 -c "import sys, json; print(json.load(sys.stdin)['event_id'])")
 curl -s -N $URL/gradio_api/call/predict/$EVENT_ID
 '''
-    output = json.dumps(api_result(res, confidence), indent=2)
-    return python, curl, output
+    return python, curl

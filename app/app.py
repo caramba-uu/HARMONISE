@@ -1,6 +1,7 @@
 # HARMONISE app: per-visit RRMS/SPMS conformal predictions and the Lorscheider criteria for one patient.
 #   pixi run app        (then open http://127.0.0.1:7860; the API is documented under "Use via API")
 import io
+import json
 import os
 import random
 import sys
@@ -24,6 +25,53 @@ PRIVATE = {"api_visibility": "private"}  # UI callbacks are not part of the publ
 CSS = """
 .gradio-container {max-width: 1150px !important; margin: 0 auto !important;}
 .step h2 {margin-top: 0.8em; margin-bottom: 0;}
+/* number boxes: hide the browser's tiny spinners, STEPPER_JS adds larger - / + buttons */
+input[type=number] {-moz-appearance: textfield; appearance: textfield;}
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {-webkit-appearance: none; margin: 0;}
+.step-btn {min-width: 2.4rem; font-size: 1.3rem; line-height: 1; cursor: pointer; color: var(--body-text-color);
+           background: var(--background-fill-secondary); border: 1px solid var(--input-border-color);}
+.step-btn:hover {background: var(--border-color-primary);}
+label.block:has(> .step-btn) {display: grid; grid-template-columns: auto 1fr auto; column-gap: 0;}
+label.block:has(> .step-btn) > :not(input):not(.step-btn) {grid-column: 1 / -1; justify-self: start;}
+label.block > .step-btn:first-of-type {border-radius: var(--input-radius) 0 0 var(--input-radius); border-right: none;}
+label.block > .step-btn:last-of-type {border-radius: 0 var(--input-radius) var(--input-radius) 0; border-left: none;}
+label.block > input[type=number] {border-radius: 0; text-align: center;}
+.tab-like-container:has(> .step-btn) {height: 2.4rem !important;}
+.tab-like-container > .step-btn {border: none; border-radius: 0;}
+.tab-like-container > input[type=number] {font-size: var(--text-md) !important;}
+"""
+
+# wraps every number box (gr.Number and the box next to each gr.Slider) in - / + buttons; rows shown later get
+# them too. Gradio reads the new value from the "input" event and a slider's release from "blur".
+STEPPER_JS = """
+<script>
+(() => {
+  const SELECTOR = "label.block > input[type=number], .tab-like-container > input[type=number]";
+  function button(input, text, dir) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "step-btn"; b.textContent = text;
+    b.setAttribute("aria-label", dir > 0 ? "Increase" : "Decrease");
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (input.disabled) return;
+      if (input.value === "") input.value = input.min || 0;
+      else if (dir > 0) input.stepUp(); else input.stepDown();
+      input.dispatchEvent(new Event("input", {bubbles: true}));
+      input.dispatchEvent(new Event("blur"));
+    });
+    return b;
+  }
+  function add(root) {
+    root.querySelectorAll(SELECTOR).forEach((input) => {
+      if (input.dataset.stepper) return;
+      input.dataset.stepper = "1";
+      input.before(button(input, "\\u2212", -1));
+      input.after(button(input, "+", 1));
+    });
+  }
+  new MutationObserver(() => add(document)).observe(document.documentElement, {childList: true, subtree: true});
+})();
+</script>
 """
 
 READING = """
@@ -32,16 +80,20 @@ its p-value is above the significance level (1 − confidence). A visit can be *
 **RRMS or SPMS** (■, the model can't decide at this confidence) or **No prediction** (|, unlike both).
 Higher confidence means fewer mistakes but more undecided visits.
 
-**Lorscheider criteria.** An EDSS increase of ≥ 1.0 (≥ 0.5 when EDSS > 5.5) to at least 4, not within 30 days of a
-relapse, confirmed at the next visit ≥ 90 days later. Needs at least 3 visits. Relapses are only used here; the
-models themselves don't use them.
+**Lorscheider criteria** (Lorscheider et al., Brain 2016). Transition to SPMS is confirmed disability progression
+independent of relapse activity: an increase in EDSS of 1.0 point if EDSS ≤ 5.5, or 0.5 points if EDSS ≥ 6.0, with a
+minimum EDSS of 4.0 and a pyramidal functional system (FS) score of at least 2, confirmed over at least three months.
+The FS criterion is applied when it is recorded for a visit; when it is missing, the remaining criteria are applied
+without it. Here each visit is compared with the preceding one, EDSS scores within 30 days after a relapse are not
+used, and progression is confirmed at the first visit at least 90 days later. Needs at least 3 visits; SPMS is shown
+from the progression visit on. Relapses and the FS score are only used here; the models themselves don't use them.
 
 **SHAP** explains the random forest score that the conformal p-values are built on.
 """
 
 API_INTRO = """
 The results on this page are also available from code. Below is a script for **this patient, model and confidence
-level**, and the response `/predict` gives for it. All endpoints are listed with their parameters under **Use via API**
+level**, and what each endpoint returns for it. All endpoints are listed with their parameters under **Use via API**
 at the bottom of the page; more examples are in `app/README.md`.
 
 | Endpoint | Input | Returns |
@@ -122,13 +174,17 @@ def on_country(country):
     return model, au.paper_confidence(country), au.suggestion_text(country)
 
 
-def run(model, confidence, theme, data):
+def run(model, confidence, theme, data, progress=gr.Progress()):
     if data is None:
         return [gr.skip()] * 14
     try:
+        progress(0.1, desc="Loading the model")
+        au.get_model(model)
+        progress(0.5, desc="Predicting")
         res = au.predict(model, data)
     except (ValueError, FileNotFoundError) as e:
         fail(e)
+    progress(0.8, desc="Drawing the plots")
     info, table = au.patient_table(data)
     n = len(res["patient"])
     return (res, gr.update(visible=True), *redraw(res, confidence, theme), info, table,
@@ -143,18 +199,32 @@ def redraw(res, confidence, theme):
             au.results_table(res, confidence))
 
 
-def explain_ui(res, visit, theme):
+def explain_ui(res, visit, theme, progress=gr.Progress()):
     if res is None:
         fail("Run a prediction first")
+    progress(0.1, desc="Computing SHAP values")
     sv = au.shap_values(res)
+    progress(0.8, desc="Drawing the plots")
     return sv, au.shap_heatmap(res, sv, theme), au.shap_waterfall(res, sv, min(int(visit), len(sv["values"])), theme)
 
 
 def api_tab(res, data, model, confidence, country, request: gr.Request):
+    # code snippets and the real response of each endpoint for the patient on screen
     if res is None or data is None:
-        return gr.skip(), gr.skip(), gr.skip()
+        return [gr.skip()] * 6
     host = request.headers.get("host", "127.0.0.1:7860") if request else "127.0.0.1:7860"
-    return au.api_snippets(res, data, model, confidence, country, f"http://{host}/")
+    python, curl = au.api_snippets(res, data, model, confidence, country, f"http://{host}/")
+    responses = [api_models(), api_suggest_model(country if country in au.SUMMARY else "AU"),
+                 au.api_result(res, confidence)]
+    return python, curl, *[json.dumps(r, indent=2) for r in responses]
+
+
+def api_tab_explain(res, progress=gr.Progress()):
+    # SHAP doesn't depend on the confidence level, so it is only refreshed for a new prediction
+    if res is None:
+        return gr.skip()
+    progress(0.1, desc="Computing SHAP values")
+    return json.dumps(au.api_shap(res), indent=2)
 
 
 def redraw_shap(res, sv, visit, theme):
@@ -311,7 +381,16 @@ with gr.Blocks(title="HARMONISE", analytics_enabled=False, delete_cache=(600, 60
                 gr.Markdown(API_INTRO)
                 api_python = gr.Code(language="python", label="Python", interactive=False, max_lines=22, show_line_numbers=False)
                 api_curl = gr.Code(language="shell", label="curl", interactive=False, max_lines=10, wrap_lines=True, show_line_numbers=False)
-                api_output = gr.Code(language="json", label="Response of /predict", interactive=False, max_lines=22, show_line_numbers=False)
+                gr.Markdown("**Responses** for this patient")
+                with gr.Tabs():
+                    api_out = {}
+                    for name in ("models", "suggest_model", "predict", "predict_csv", "explain"):
+                        with gr.Tab(f"/{name}"):
+                            if name == "predict_csv":
+                                gr.Markdown("Same response as `/predict`, for the patient in the CSV files.")
+                            else:
+                                api_out[name] = gr.Code(language="json", show_label=False, interactive=False,
+                                                        max_lines=22, show_line_numbers=False)
         with gr.Accordion("How to read the results", open=False):
             gr.Markdown(READING)
 
@@ -326,9 +405,9 @@ with gr.Blocks(title="HARMONISE", analytics_enabled=False, delete_cache=(600, 60
     confidence.change(redraw, [result, confidence, theme], plots, **PRIVATE)
     result_tabs.select(None, None, None, js=RESIZE_JS, **PRIVATE)
     # every new prediction (and a new confidence level) refreshes the API examples and resizes the plots
-    api_outputs = [api_python, api_curl, api_output]
+    api_outputs = [api_python, api_curl, api_out["models"], api_out["suggest_model"], api_out["predict"]]
     result.change(api_tab, [result, current, model, confidence, country], api_outputs, **PRIVATE).then(
-        None, None, None, js=RESIZE_JS, **PRIVATE)
+        None, None, None, js=RESIZE_JS, **PRIVATE).then(api_tab_explain, result, api_out["explain"], **PRIVATE)
     confidence.release(api_tab, [result, current, model, confidence, country], api_outputs, **PRIVATE)
     reset.click(au.paper_confidence, country, confidence, **PRIVATE)
 
@@ -363,4 +442,7 @@ with gr.Blocks(title="HARMONISE", analytics_enabled=False, delete_cache=(600, 60
 if __name__ == "__main__":
     # load scikit-learn and the default model while the server starts, so the first prediction is instant
     threading.Thread(target=au.get_model, args=(au.suggested_model(DEFAULT_COUNTRY),), daemon=True).start()
-    demo.launch(theme=gr.themes.Soft(text_size=gr.themes.sizes.text_lg), css=CSS, share=False)
+    # Source Sans Pro, the font of MSP-tracker; it ships with Gradio, so nothing is fetched from Google Fonts
+    font = [gr.themes.LocalFont("Source Sans Pro"), "ui-sans-serif", "system-ui", "sans-serif"]
+    demo.launch(theme=gr.themes.Soft(text_size=gr.themes.sizes.text_lg, font=font), css=CSS, head=STEPPER_JS,
+                share=False)

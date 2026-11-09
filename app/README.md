@@ -48,7 +48,7 @@ A Light / Dark switch is at the top right.
 ### How the inputs are used
 
 - **Model features** (per visit, same as `1_data_cleaning.ipynb`): age at visit, sex, EDSS, age at diagnosis, diagnosis year, and treatment as first-line DMT / second-line DMT / none / stem cell (HSCT). Treatment `other` counts as none. Each visit is predicted from its own values; nothing is carried over between visits.
-- **Relapses and the pyramidal score** are used only by the **Lorscheider criteria**. Progression is an EDSS increase of ≥ 1.0 (≥ 0.5 when the baseline EDSS is > 5.5) to at least 4.0, not within 30 days of a relapse, confirmed at the first visit at least 90 days later. A baseline with a recorded pyramidal score < 2 is skipped. The criteria need at least 3 visits.
+- **Relapses and the pyramidal score** are used only by the **Lorscheider criteria**. The Lorscheider criteria ([Lorscheider et al., Brain 2016](https://doi.org/10.1093/brain/aww173)) define transition to SPMS as confirmed disability progression independent of relapse activity: an increase in EDSS of 1.0 point if EDSS ≤5.5, or 0.5 points if EDSS ≥6.0, with a minimum EDSS of 4.0 and a pyramidal functional system (FS) score of at least 2, confirmed over at least three months. The FS criterion is applied when it is recorded for a visit; when it is missing, the remaining criteria are applied without it. In the code (`lorscheider_progression_index` in `harmonise_utils.py`), each visit is compared with the preceding visit, EDSS scores within 30 days after a relapse onset are not used, and progression is confirmed at the first visit at least three months (90 days) later. At least three visits are needed. The app marks SPMS from the progression visit on.
 
 ## File format
 
@@ -73,7 +73,7 @@ The files in `dummy_data/` use the same layout, so `dummy_data/msbase_visits.csv
 
 ## API
 
-The app exposes five endpoints. They are listed with their parameters under **Use via API** at the bottom of the page. After a prediction, the **API** tab in the results shows the calls for that exact patient.
+The app exposes five endpoints. They are listed with their parameters under **Use via API** at the bottom of the page. After a prediction, the **API** tab in the results shows the calls for that exact patient and what each endpoint returns.
 
 | Endpoint | Input | Returns |
 |---|---|---|
@@ -123,18 +123,44 @@ EVENT_ID=$(curl -s -X POST http://127.0.0.1:7860/gradio_api/call/suggest_model \
 curl -s -N http://127.0.0.1:7860/gradio_api/call/suggest_model/$EVENT_ID
 ```
 
-**`/predict` output**
+**Outputs** for the patient above (numbers shortened; lists cut after the first entry)
+
+`/models`: all 36 models
+
+```json
+[{"model": "Hybrid AU", "description": "Trained on other countries, calibrated on Australia."}, ...]
+```
+
+`/suggest_model` with `"AR"`
+
+```json
+{"country": "AR", "model": "Hybrid CZ", "confidence": 93, "well_calibrated_in_paper": true}
+```
+
+`/predict` (and `/predict_csv`, which returns the same)
 
 ```json
 {
   "model": "Hybrid AU", "confidence": 90, "significance": 0.1,
-  "model_spms_from_visit": null, "lorscheider_spms_from_visit": 3, "lorscheider_applicable": true,
-  "visits": [{"visit": 1, "date": "2006-01-10", "edss": 2.0, "p_rrms": 0.41, "p_spms": 0.002,
-              "prediction_set": ["RRMS"], "lorscheider": "RRMS"}]
+  "model_spms_from_visit": null, "lorscheider_spms_from_visit": null, "lorscheider_applicable": true,
+  "visits": [{"visit": 1, "date": "2006-01-10", "edss": 2.0, "p_rrms": 0.796, "p_spms": 0.0007,
+              "prediction_set": ["RRMS"], "lorscheider": "RRMS"}, ...]
 }
 ```
 
-`prediction_set` is `["RRMS"]`, `["SPMS"]`, `["RRMS", "SPMS"]` (undecided) or `[]` (no prediction). Visit numbers count from 1 in date order.
+`prediction_set` is `["RRMS"]`, `["SPMS"]`, `["RRMS", "SPMS"]` (undecided) or `[]` (no prediction). Visit numbers count from 1 in date order. `null` in `*_spms_from_visit` means no SPMS visit.
+
+`/explain`: SHAP values for the SPMS class; `base_value` plus the SHAP values of a visit add up to its `rf_spms_score`
+
+```json
+{
+  "model": "Hybrid AU", "class": "SPMS", "base_value": 0.5,
+  "visits": [{"visit": 1, "rf_spms_score": 0.0,
+              "shap": {"Age at visit": -0.087, "Sex": 0.007, "EDSS score": -0.307, "Age at diagnosis": -0.023,
+                       "Diagnosis year": -0.035, "First-line DMT": -0.022, "Second-line DMT": 0.0006,
+                       "No treatment": -0.033, "Stem cell treatment": 0.0}}, ...]
+}
+```
 
 ## Files
 
